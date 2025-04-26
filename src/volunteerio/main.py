@@ -2,7 +2,7 @@ import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
 from dash import Dash, html, dcc, Output, Input, State, no_update, MATCH, _dash_renderer
 import pandas as pd
-
+from datetime import date
 import volunteerio.pages.login_page as login_page
 import volunteerio.pages.hours_page as hours_page
 from volunteerio.callbacks import login_callbacks, hours_callbacks
@@ -21,6 +21,7 @@ app.layout = dmc.MantineProvider(
             dcc.Location(id="url", refresh=False, pathname="/login"),
             dbc.Container(id="page-content", children=[login_page.layout], fluid=True),
             dcc.Store(id="user-store", data=""),
+            dcc.Store(id="selected-date-store", data=date.today().isoformat()),
         ]
     )
 )
