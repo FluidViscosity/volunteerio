@@ -75,6 +75,19 @@ def get_hours(user: str, selected_date: str) -> tuple[list[str], list[tuple]]:
     return day_titles, res
 
 
+def get_date_from_col(current_date: str, col_id: str):
+    cur_date = date.fromisoformat(current_date)
+    weekday = cur_date.weekday()
+    for i in range(weekday + 1):
+        d = cur_date - timedelta(days=i)
+        if d.day == int(col_id.split(" ")[1]):
+            return d
+    for i in range(7 - weekday):
+        d = cur_date + timedelta(days=i)
+        if d.day == int(col_id.split(" ")[1]):
+            return d
+
+
 def create_calendar(user: str, date: str) -> html.Table:
 
     days, display_hours = get_hours(user, date)
@@ -109,7 +122,7 @@ def register_callbacks(app) -> None:
         cols, data = create_calendar(user, cur_date)
         table = (
             dag.AgGrid(
-                id="basic-editing-example",
+                id="hours-table",
                 columnDefs=[{"field": i} for i in cols],
                 rowData=data,
                 columnSize="sizeToFit",
@@ -119,6 +132,40 @@ def register_callbacks(app) -> None:
         )
 
         return html.H1(user, style={"textAlign": "center"}), table
+
+    @app.callback(
+        Output("cell-changed", "children"),
+        Input("hours-table", "cellValueChanged"),
+        State("selected-date-store", "data"),
+        State("user-store", "data"),
+    )
+    def update_hours(cell_changed: dict, cur_date: str, volunteer_name: str) -> dict:
+        if cell_changed is None:
+            return no_update
+        hours = float(cell_changed[0]["value"])
+        activity = cell_changed[0]["data"]["Activity"].lower()
+        set_date = get_date_from_col(
+            current_date=cur_date, col_id=str(cell_changed[0]["colId"])
+        )
+        with psycopg2.connect(**db_params) as con:
+            with con.cursor() as cur:
+                query = """
+                WITH v AS (
+                    SELECT id AS volunteer_id FROM volunteers WHERE name = %s
+                ),
+                a AS (
+                    SELECT id AS activity_id FROM activities WHERE activity = %s
+                )
+                INSERT INTO activity_store (volunteer_id, activity_id, date, hours)
+                SELECT v.volunteer_id, a.activity_id, %s, %s
+                FROM v, a
+                ON CONFLICT (volunteer_id, activity_id, date)
+                DO UPDATE SET hours = EXCLUDED.hours;
+                """
+
+                cur.execute(query, (volunteer_name, activity, set_date, hours))
+
+        return f"{cell_changed}"
 
     @app.callback(
         Output("selected-date-store", "data"),
