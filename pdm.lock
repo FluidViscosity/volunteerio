@@ -5,7 +5,7 @@
 groups = ["default"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:1d40bacf5752b74595e48f7482cba86a741a68ed88a9c79703fd65063b2226c8"
+content_hash = "sha256:a19b5151ac91ae57a785d9f9a3f6d294d8083f297cc2d6d2f67f69ee3be7c8d8"
 
 [[metadata.targets]]
 requires_python = ">=3.11"
@@ -154,6 +154,20 @@ dependencies = [
 files = [
     {file = "dash-3.0.1-py3-none-any.whl", hash = "sha256:b5355580d16d75713e32d3609792ac39f840c0341699c0fec62771fb24b59a59"},
     {file = "dash-3.0.1.tar.gz", hash = "sha256:8cfa02f8a3bd0905af1e721614dc6b23bbf00bf78fd3110ec2423cf74c6c9564"},
+]
+
+[[package]]
+name = "dash-ag-grid"
+version = "31.3.1"
+requires_python = ">=3.6"
+summary = "Dash wrapper around AG Grid, the best interactive data grid for the web."
+groups = ["default"]
+dependencies = [
+    "dash>=2",
+]
+files = [
+    {file = "dash_ag_grid-31.3.1-py3-none-any.whl", hash = "sha256:2bce8e2a99c2d08800f6c119e4723c838789a093eea29b121aabdb541e1da156"},
+    {file = "dash_ag_grid-31.3.1.tar.gz", hash = "sha256:90069c340d893841d4e405fd3759794260946428c9cefcf70a356431e68c5020"},
 ]
 
 [[package]]
