@@ -19,7 +19,7 @@ layout = dbc.Container(
         html.Br(),
         dbc.Row(dbc.Col(id="hours-table-col")),
         html.Br(),
-        html.P(id="cell-changed", style={"hidden": True}),
+        html.P(id="cell-changed", style={"display": "None"}),
     ],
     # className="d-flex flex-column align-items-center justify-content-center vh-100",
 )

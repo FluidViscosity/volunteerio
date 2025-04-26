@@ -123,10 +123,20 @@ def register_callbacks(app) -> None:
         table = (
             dag.AgGrid(
                 id="hours-table",
-                columnDefs=[{"field": i} for i in cols],
+                columnDefs=[
+                    (
+                        {"field": i, "editable": False}
+                        if "activity" in i.lower()
+                        else {
+                            "field": i,
+                            "editable": True,
+                            "cellDataType": "number",
+                        }
+                    )
+                    for i in cols
+                ],
                 rowData=data,
                 columnSize="sizeToFit",
-                defaultColDef={"editable": True, "cellDataType": False},
                 dashGridOptions={"animateRows": False},
             ),
         )
