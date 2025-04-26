@@ -18,7 +18,7 @@ layout = dbc.Container(
                             dcc.Dropdown(
                                 id="username-input",
                                 placeholder="Username",
-                                options=["Name1", "Name2", "Add new..."],
+                                # options=["Name1", "Name2", "Add new..."],
                             ),
                             width=4,
                         ),

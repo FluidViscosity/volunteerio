@@ -1,4 +1,7 @@
 from dash import Output, Input, no_update, State
+import psycopg2
+
+from volunteerio.db_config import db_params
 
 
 def is_username_available(user: str) -> bool:
@@ -6,6 +9,24 @@ def is_username_available(user: str) -> bool:
 
 
 def register_login_callbacks(app):
+    @app.callback(Output("username-input", "options"), Input("url", "pathname"))
+    def populate_users(path: str):
+        if path is None or path != "/login":
+            return no_update
+        with psycopg2.connect(**db_params) as con:
+            with con.cursor() as cur:
+                query = """
+                        SELECT volunteers.name
+                        FROM volunteers;
+                        """
+                cur.execute(query)
+                res = cur.fetchall()
+                res = [x[0] for x in res]
+                if res is None:
+                    raise Exception("Can't find users")
+                res.append("Add new...")
+        return res
+
     @app.callback(
         Output("url", "pathname", allow_duplicate=True),
         Output("new-user-modal", "is_open", allow_duplicate=True),
