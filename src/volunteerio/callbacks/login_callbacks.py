@@ -40,6 +40,9 @@ def register_login_callbacks(app):
 
         if not n_clicks:
             return no_update
+        if user == None:
+            return no_update
+
         if user == "Add new...":
             return no_update, True, ""
         else:
