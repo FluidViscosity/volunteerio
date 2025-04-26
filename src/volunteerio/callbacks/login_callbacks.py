@@ -4,7 +4,25 @@ import psycopg2
 from volunteerio.db_config import db_params
 
 
-def is_username_available(user: str) -> bool:
+def is_username_available(new_user: str) -> bool:
+    with psycopg2.connect(**db_params) as con:
+        with con.cursor() as cur:
+            query = """
+                    SELECT v.name
+                    FROM volunteers v;
+                    """
+            cur.execute(query)
+            res = cur.fetchall()
+            for user in res:
+                if new_user == str(user[0]):
+                    return False
+
+            # add new user
+            query = """
+                    INSERT INTO volunteers (name,email)
+                    VALUES (%s,'')
+                    """
+            cur.execute(query, (new_user,))
     return True
 
 
