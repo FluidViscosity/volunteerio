@@ -29,49 +29,48 @@ def get_week_dates(selected_date: str):
     return [f"{res[0]} {res[1].day}" for res in zip(days, week)], week
 
 
-def get_hours(user: str, selected_date: str) -> tuple[list[str], list[dict]]:
-
+def get_hours(user: str, selected_date: str) -> tuple[list[str], list[tuple]]:
     day_titles, dates = get_week_dates(selected_date)
-    # Build the dynamic SUM(CASE...) parts
+
     sum_cases = []
     for d in dates:
         colname = d.isoformat()
-        sum_case = (
-            f'SUM(CASE WHEN store.date = %s THEN store.hours ELSE 0 END) AS "{colname}"'
-        )
+        sum_case = f"""
+            SUM(
+                CASE 
+                    WHEN store.date = %s AND v.name = %s THEN store.hours
+                    ELSE 0
+                END
+            ) AS "{colname}"
+            """
         sum_cases.append(sum_case)
 
     sum_cases_sql = ",\n    ".join(sum_cases)
 
-    # Final query
     query = f"""
         SELECT
             a.activity,
             {sum_cases_sql}
         FROM
-            activity_store store
-        JOIN
-            activities a ON a.id = store.activity_id
-        JOIN
-            volunteers v ON v.id = store.volunteer_id
-        WHERE
-            v.name = %s
-            AND store.date BETWEEN %s AND %s
+            activities a
+        LEFT JOIN activity_store store ON store.activity_id = a.id
+        LEFT JOIN volunteers v ON v.id = store.volunteer_id
         GROUP BY
             a.activity
         ORDER BY
             a.activity;
     """
-    query_params = sorted(dates)
-    query_params.append(user)
-    query_params.append(dates[0])
-    query_params.append(dates[-1])
-    query_params = [d.isoformat() if isinstance(d, date) else d for d in query_params]
+
+    query_params = []
+    for d in dates:
+        query_params.append(d.isoformat())  # store.date = ?
+        query_params.append(user)  # v.name = ?
+
     with psycopg2.connect(**db_params) as con:
         with con.cursor() as cur:
             cur.execute(query, query_params)
-
             res = cur.fetchall()
+
     return day_titles, res
 
 
