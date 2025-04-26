@@ -1,5 +1,5 @@
 from copy import deepcopy
-from dash import html, Input, Output, State, no_update, dash_table
+from dash import html, Input, Output, State, no_update, dash_table, callback_context
 from volunteerio.db_config import db_params
 import dash_bootstrap_components as dbc
 import psycopg2
@@ -97,16 +97,35 @@ def register_callbacks(app) -> None:
         Output("calendar-table", "columns", allow_duplicate=True),
         Output("calendar-table", "data", allow_duplicate=True),
         Input("url", "pathname"),
+        Input("selected-date-store", "data"),
         State("user-store", "data"),
-        State("selected-date-store", "data"),
     )
-    def prepare_hours_page(url: str, user: str, date: str):
+    def prepare_hours_page(url: str, cur_date: str, user: str):
         if url != "/hours":
             return no_update
 
-        cols, data = create_calendar(user, date)
+        cols, data = create_calendar(user, cur_date)
 
         return html.H1(user, style={"textAlign": "center"}), cols, data
+
+    @app.callback(
+        Output("selected-date-store", "data"),
+        Input("calendar-previous-button", "n_clicks"),
+        Input("calendar-next-button", "n_clicks"),
+        State("selected-date-store", "data"),
+    )
+    def update_date(
+        prev_clicks: int | None, next_clicks: int | None, cur_date: str
+    ) -> str:
+        if prev_clicks is None and next_clicks is None:
+            return no_update
+        button = callback_context.triggered_id
+        if button == "calendar-previous-button":
+            new_date = date.fromisoformat(cur_date) - timedelta(days=7)
+        else:
+            new_date = date.fromisoformat(cur_date) + timedelta(days=7)
+
+        return new_date.isoformat()
 
 
 # https://github.com/MatthieuRu/run-together/blob/main/dash_apps/run_together/components/calendar_training.py
