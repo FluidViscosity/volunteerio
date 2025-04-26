@@ -1,6 +1,8 @@
 from copy import deepcopy
 from dash import html, Input, Output, State, no_update, dash_table
+from volunteerio.db_config import db_params
 import dash_bootstrap_components as dbc
+import psycopg2
 
 
 def get_hours(activities: list[str], days: list[str]) -> list[dict]:
@@ -15,9 +17,18 @@ def get_hours(activities: list[str], days: list[str]) -> list[dict]:
 def get_activities(user: str) -> list[str]:
     """
     Fetch the previous activities that the volunteer has undertaken from the database
-    TODO
     """
-    return ["Weeding", "Pest Control", "Planting"]
+    with psycopg2.connect(**db_params) as con:
+        with con.cursor() as cur:
+            cur.execute(
+                """
+                SELECT * FROM activities
+                """
+            )
+            activities = [a[1].title() for a in cur.fetchall()]
+            print(activities)
+
+    return activities
 
 
 def create_calendar(user: str) -> html.Table:
