@@ -73,7 +73,6 @@ def get_hours(
             cur.execute(query, query_params)
 
             res = cur.fetchall()
-
     return day_titles, res
 
 
@@ -89,7 +88,6 @@ def get_activities() -> list[str]:
                 """
             )
             activities = [a[1].title() for a in cur.fetchall()]
-            print(activities)
 
     return activities
 
@@ -99,7 +97,17 @@ def create_calendar(user: str, date: str) -> html.Table:
 
     days, display_hours = get_hours(activities, date)
     cols = ["Activity"] + days
-    return [{"name": i, "id": i.lower()} for i in cols], display_hours
+    # convert display hours to a list of dictionaries
+    data = []
+    for i in range(len(display_hours)):
+        data.append(
+            {
+                z[0]: z[1].title() if isinstance(z[1], str) else float(z[1])
+                for z in zip(cols, display_hours[i])
+            }
+        )
+
+    return [{"name": i, "id": i} for i in cols], data
 
 
 def register_callbacks(app) -> None:
