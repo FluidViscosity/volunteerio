@@ -17,7 +17,7 @@ layout = dbc.Container(
             justify="between",
         ),
         html.Br(),
-        dbc.Row(dbc.Col(dash_table.DataTable(id="calendar-table", editable=True))),
+        dbc.Row(dbc.Col(id="hours-table-col")),
         html.Br(),
     ],
     # className="d-flex flex-column align-items-center justify-content-center vh-100",

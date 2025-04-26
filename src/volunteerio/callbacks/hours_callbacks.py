@@ -2,6 +2,7 @@ from copy import deepcopy
 from dash import html, Input, Output, State, no_update, dash_table, callback_context
 from volunteerio.db_config import db_params
 import dash_bootstrap_components as dbc
+import dash_ag_grid as dag
 import psycopg2
 from datetime import date, timedelta
 
@@ -88,14 +89,15 @@ def create_calendar(user: str, date: str) -> html.Table:
             }
         )
 
-    return [{"name": i, "id": i} for i in cols], data
+    return cols, data
 
 
 def register_callbacks(app) -> None:
     @app.callback(
         Output("hours-user-title", "children"),
-        Output("calendar-table", "columns", allow_duplicate=True),
-        Output("calendar-table", "data", allow_duplicate=True),
+        Output("hours-table-col", "children"),
+        # Output("calendar-table", "columns", allow_duplicate=True),
+        # Output("calendar-table", "data", allow_duplicate=True),
         Input("url", "pathname"),
         Input("selected-date-store", "data"),
         State("user-store", "data"),
@@ -105,8 +107,18 @@ def register_callbacks(app) -> None:
             return no_update
 
         cols, data = create_calendar(user, cur_date)
+        table = (
+            dag.AgGrid(
+                id="basic-editing-example",
+                columnDefs=[{"field": i} for i in cols],
+                rowData=data,
+                columnSize="sizeToFit",
+                defaultColDef={"editable": True, "cellDataType": False},
+                dashGridOptions={"animateRows": False},
+            ),
+        )
 
-        return html.H1(user, style={"textAlign": "center"}), cols, data
+        return html.H1(user, style={"textAlign": "center"}), table
 
     @app.callback(
         Output("selected-date-store", "data"),
