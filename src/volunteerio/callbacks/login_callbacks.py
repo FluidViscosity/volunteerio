@@ -11,8 +11,9 @@ def is_username_available(user: str) -> bool:
 def register_login_callbacks(app):
     @app.callback(Output("username-input", "options"), Input("url", "pathname"))
     def populate_users(path: str):
-        if path is None or path != "/login":
+        if path is None or (path != "/login" and path != "/"):
             return no_update
+
         with psycopg2.connect(**db_params) as con:
             with con.cursor() as cur:
                 query = """
