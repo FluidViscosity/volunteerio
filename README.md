@@ -9,8 +9,10 @@ To run this software run the `src/volunteerio/run.py` file
 - DONE: fetch results from db
 - DONE: create a calendar view that can be moved along a calendar 
 - create an export button,
+- create tables if app is starting up for first time Create table if not exists (incl. constraints)
 - deploy on raspberrypi
 - show to rangers
+
 
 ## DB Schema
 ### Volunteers
