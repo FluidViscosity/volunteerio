@@ -5,7 +5,10 @@ layout = dbc.Container(
     [
         dbc.Row(
             dbc.Col(
-                html.H1("VolunteerIO", style={"textAlign": "center"}),
+                [
+                    html.H1("Shakespear Regional Park", style={"textAlign": "center"}),
+                    html.H3("Volunteer Hour Logging", style={"textAlign": "center"}),
+                ],
                 width=12,
             )
         ),
