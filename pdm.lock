@@ -5,7 +5,7 @@
 groups = ["default"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:a19b5151ac91ae57a785d9f9a3f6d294d8083f297cc2d6d2f67f69ee3be7c8d8"
+content_hash = "sha256:9ccb64185a385baef75242b98df9b67c73d1820703b3fd3ac3c8c6c70cdf83a4"
 
 [[metadata.targets]]
 requires_python = ">=3.11"
@@ -763,6 +763,17 @@ groups = ["default"]
 files = [
     {file = "urllib3-2.3.0-py3-none-any.whl", hash = "sha256:1cee9ad369867bfdbbb48b7dd50374c0967a0bb7710050facf0dd6911440e3df"},
     {file = "urllib3-2.3.0.tar.gz", hash = "sha256:f8c5449b3cf0861679ce7e0503c7b44b5ec981bec0d1d3795a07f1ba96f0204d"},
+]
+
+[[package]]
+name = "waitress"
+version = "3.0.2"
+requires_python = ">=3.9.0"
+summary = "Waitress WSGI server"
+groups = ["default"]
+files = [
+    {file = "waitress-3.0.2-py3-none-any.whl", hash = "sha256:c56d67fd6e87c2ee598b76abdd4e96cfad1f24cacdea5078d382b1f9d7b5ed2e"},
+    {file = "waitress-3.0.2.tar.gz", hash = "sha256:682aaaf2af0c44ada4abfb70ded36393f0e307f4ab9456a215ce0020baefc31f"},
 ]
 
 [[package]]
