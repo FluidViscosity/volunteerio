@@ -27,17 +27,21 @@ layout = dbc.Container(
                 dbc.ModalHeader("Export"),
                 dbc.ModalBody(
                     dbc.Row(
-                        dbc.Col(
-                            [
+                        [
+                            dbc.Col(
                                 dcc.DatePickerRange(
                                     id="export-dates",
                                     min_date_allowed="2025-01-01",
                                     max_date_allowed=date.today(),
                                     minimum_nights=0,
                                 ),
+                                width=8,
+                            ),
+                            dbc.Col(
                                 dbc.Button("Export", id="export-modal-button"),
-                            ]
-                        )
+                                width=4,
+                            ),
+                        ]
                     )
                 ),
             ],

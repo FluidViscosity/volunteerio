@@ -1,5 +1,14 @@
 from copy import deepcopy
-from dash import html, Input, Output, State, no_update, dash_table, callback_context
+from dash import (
+    html,
+    Input,
+    Output,
+    State,
+    no_update,
+    dash_table,
+    callback_context,
+    dcc,
+)
 import pandas as pd
 from volunteerio.db_config import db_params
 import dash_bootstrap_components as dbc
@@ -145,7 +154,7 @@ def register_callbacks(app) -> None:
         return html.H1(user, style={"textAlign": "center"}), table
 
     @app.callback(
-        Output("cell-changed", "children", allow_duplicate=True),
+        Output("cell-changed", "children"),
         Input("hours-table", "cellValueChanged"),
         State("selected-date-store", "data"),
         State("user-store", "data"),
@@ -206,7 +215,7 @@ def register_callbacks(app) -> None:
         return True
 
     @app.callback(
-        Output("cell-changed", "children", allow_duplicate=True),
+        Output("export-download", "data"),
         Input("export-modal-button", "n_clicks"),
         State("export-dates", "start_date"),
         State("export-dates", "end_date"),
@@ -229,8 +238,9 @@ def register_callbacks(app) -> None:
                         WHERE store.date BETWEEN %s AND %s
                         """
                 df = pd.read_sql_query(query, con=con, params=(start, end))
-                df.to_csv(f"volunteerio_export_{start}_to_{end}.csv")
-        return "Export completed"
+        return dcc.send_data_frame(
+            df.to_csv, f"volunteerio_export_{start}_to_{end}.csv", index=False
+        )
 
 
 # https://github.com/MatthieuRu/run-together/blob/main/dash_apps/run_together/components/calendar_training.py

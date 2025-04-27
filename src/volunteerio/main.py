@@ -22,6 +22,7 @@ app.layout = dmc.MantineProvider(
             dbc.Container(id="page-content", children=[login_page.layout], fluid=True),
             dcc.Store(id="user-store", data=""),
             dcc.Store(id="selected-date-store", data=date.today().isoformat()),
+            dcc.Download(id="export-download"),
         ]
     )
 )
