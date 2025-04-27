@@ -1,5 +1,6 @@
 from copy import deepcopy
 from dash import html, Input, Output, State, no_update, dash_table, callback_context
+import pandas as pd
 from volunteerio.db_config import db_params
 import dash_bootstrap_components as dbc
 import dash_ag_grid as dag
@@ -144,7 +145,7 @@ def register_callbacks(app) -> None:
         return html.H1(user, style={"textAlign": "center"}), table
 
     @app.callback(
-        Output("cell-changed", "children"),
+        Output("cell-changed", "children", allow_duplicate=True),
         Input("hours-table", "cellValueChanged"),
         State("selected-date-store", "data"),
         State("user-store", "data"),
@@ -195,6 +196,41 @@ def register_callbacks(app) -> None:
             new_date = date.fromisoformat(cur_date) + timedelta(days=7)
 
         return new_date.isoformat()
+
+    @app.callback(
+        Output("export-modal", "is_open"), Input("open-export-modal", "n_clicks")
+    )
+    def open_export_modal(n_clicks: int | None) -> bool:
+        if n_clicks is None:
+            return no_update
+        return True
+
+    @app.callback(
+        Output("cell-changed", "children", allow_duplicate=True),
+        Input("export-modal-button", "n_clicks"),
+        State("export-dates", "start_date"),
+        State("export-dates", "end_date"),
+        State("user-store", "data"),
+    )
+    def export_data(n_clicks: int | None, start: str, end: str, user: str):
+        if n_clicks is None:
+            return no_update
+
+        if start is None and end is None:
+            return no_update
+
+        with psycopg2.connect(**db_params) as con:
+            with con.cursor() as cur:
+                query = """
+                        SELECT *
+                        FROM activity_store store
+                        LEFT JOIN volunteers v ON v.id = store.volunteer_id
+                        LEFT JOIN activities a ON a.id = store.activity_id  
+                        WHERE store.date BETWEEN %s AND %s
+                        """
+                df = pd.read_sql_query(query, con=con, params=(start, end))
+                df.to_csv(f"volunteerio_export_{start}_to_{end}.csv")
+        return "Export completed"
 
 
 # https://github.com/MatthieuRu/run-together/blob/main/dash_apps/run_together/components/calendar_training.py
