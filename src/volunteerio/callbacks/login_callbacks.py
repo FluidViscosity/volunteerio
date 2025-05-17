@@ -1,11 +1,51 @@
 from dash import Output, Input, no_update, State
+import psycopg2
+
+from volunteerio.db_config import db_params
 
 
-def is_username_available(user: str) -> bool:
+def is_username_available(new_user: str) -> bool:
+    with psycopg2.connect(**db_params) as con:
+        with con.cursor() as cur:
+            query = """
+                    SELECT v.name
+                    FROM volunteers v;
+                    """
+            cur.execute(query)
+            res = cur.fetchall()
+            for user in res:
+                if new_user == str(user[0]):
+                    return False
+
+            # add new user
+            query = """
+                    INSERT INTO volunteers (name,email)
+                    VALUES (%s,'')
+                    """
+            cur.execute(query, (new_user,))
     return True
 
 
 def register_login_callbacks(app):
+    @app.callback(Output("username-input", "options"), Input("url", "pathname"))
+    def populate_users(path: str):
+        if path is None or (path != "/login" and path != "/"):
+            return no_update
+
+        with psycopg2.connect(**db_params) as con:
+            with con.cursor() as cur:
+                query = """
+                        SELECT volunteers.name
+                        FROM volunteers;
+                        """
+                cur.execute(query)
+                res = cur.fetchall()
+                res = [x[0] for x in res]
+                if res is None:
+                    raise Exception("Can't find users")
+                res.append("Add new...")
+        return res
+
     @app.callback(
         Output("url", "pathname", allow_duplicate=True),
         Output("new-user-modal", "is_open", allow_duplicate=True),
@@ -18,6 +58,9 @@ def register_login_callbacks(app):
 
         if not n_clicks:
             return no_update
+        if user == None:
+            return no_update
+
         if user == "Add new...":
             return no_update, True, ""
         else:

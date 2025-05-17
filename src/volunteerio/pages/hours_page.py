@@ -1,5 +1,6 @@
 from dash import html, dcc, dash_table
 import dash_bootstrap_components as dbc
+from datetime import date
 
 layout = dbc.Container(
     [
@@ -17,21 +18,35 @@ layout = dbc.Container(
             justify="between",
         ),
         html.Br(),
-        dbc.Row(dbc.Col(dash_table.DataTable(id="calendar-table", editable=True))),
+        dbc.Row(dbc.Col(id="hours-table-col")),
         html.Br(),
-        dbc.Row(
-            dbc.Col(
-                dcc.Dropdown(
-                    id="add-activity-dropdown",
-                    multi=False,
-                    options=["activity1", "activity2", "activity3"],
-                    clearable=True,
-                    searchable=True,
-                    placeholder="Add activity",
+        dbc.Row(dbc.Col(dbc.Button("Export", id="open-export-modal"))),
+        dbc.Modal(
+            id="export-modal",
+            children=[
+                dbc.ModalHeader("Export"),
+                dbc.ModalBody(
+                    dbc.Row(
+                        [
+                            dbc.Col(
+                                dcc.DatePickerRange(
+                                    id="export-dates",
+                                    min_date_allowed="2025-01-01",
+                                    max_date_allowed=date.today(),
+                                    minimum_nights=0,
+                                ),
+                                width=8,
+                            ),
+                            dbc.Col(
+                                dbc.Button("Export", id="export-modal-button"),
+                                width=4,
+                            ),
+                        ]
+                    )
                 ),
-                width=4,
-            )
+            ],
         ),
+        html.P(id="cell-changed", style={"display": "None"}),
     ],
     # className="d-flex flex-column align-items-center justify-content-center vh-100",
 )
