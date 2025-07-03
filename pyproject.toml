@@ -5,7 +5,7 @@ description = "A digital record keeping app of volunteering hours"
 authors = [
     {name = "Tomer Simhony", email = "tomer.simhony@gmail.com"},
 ]
-dependencies = ["dash>=3.0.1", "dash-bootstrap-components>=2.0.0", "dash-mantine-components>=1.1.0", "dash-extensions>=1.0.20", "pandas>=2.2.3", "psycopg2>=2.9.10", "dash-ag-grid>=31.3.1", "waitress>=3.0.2"]
+dependencies = ["dash>=3.0.1", "dash-bootstrap-components>=2.0.0", "dash-mantine-components>=1.1.0", "dash-extensions>=1.0.20", "pandas>=2.2.3", "dash-ag-grid>=31.3.1", "waitress>=3.0.2", "psycopg2-binary>=2.9.10"]
 requires-python = ">=3.11"
 readme = "README.md"
 license = {text = "MIT"}
