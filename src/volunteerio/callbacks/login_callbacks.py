@@ -5,7 +5,7 @@ from volunteerio.db_config import db_params
 
 
 def is_username_available(new_user: str) -> bool:
-    with psycopg2.connect(**db_params) as con:
+    with psycopg2.connect(**db_params) as con:  # type: ignore
         with con.cursor() as cur:
             query = """
                     SELECT v.name
@@ -32,7 +32,7 @@ def register_login_callbacks(app):
         if path is None or (path != "/login" and path != "/"):
             return no_update
 
-        with psycopg2.connect(**db_params) as con:
+        with psycopg2.connect(**db_params) as con:  # type: ignore
             with con.cursor() as cur:
                 query = """
                         SELECT volunteers.name

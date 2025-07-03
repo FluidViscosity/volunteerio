@@ -9,6 +9,7 @@ from dash import (
     callback_context,
     dcc,
 )
+from dash.exceptions import PreventUpdate
 import pandas as pd
 from volunteerio.db_config import db_params
 import dash_bootstrap_components as dbc
@@ -19,14 +20,14 @@ from datetime import date, timedelta
 
 def get_week_dates(selected_date: str):
     # weekday 0 = Monday
-    selected_date = date.fromisoformat(selected_date)
-    weekday = selected_date.weekday()
+    selected_datetime = date.fromisoformat(selected_date)
+    weekday = selected_datetime.weekday()
     # create an array of dates, Monday-Sunday including the current date.
     week = []
     for i in range(weekday):
-        week.append(selected_date - timedelta(days=weekday - i))
+        week.append(selected_datetime - timedelta(days=weekday - i))
     for i in range(7 - weekday):
-        week.append(selected_date + timedelta(days=i))
+        week.append(selected_datetime + timedelta(days=i))
 
     days = [
         "Monday",
@@ -77,7 +78,7 @@ def get_hours(user: str, selected_date: str) -> tuple[list[str], list[tuple]]:
         query_params.append(d.isoformat())  # store.date = ?
         query_params.append(user)  # v.name = ?
 
-    with psycopg2.connect(**db_params) as con:
+    with psycopg2.connect(**db_params) as con:  # type: ignore
         with con.cursor() as cur:
             cur.execute(query, query_params)
             res = cur.fetchall()
@@ -98,7 +99,7 @@ def get_date_from_col(current_date: str, col_id: str):
             return d
 
 
-def create_calendar(user: str, date: str) -> html.Table:
+def create_calendar(user: str, date: str) -> tuple[list[str], list[dict]]:
 
     days, display_hours = get_hours(user, date)
     cols = ["Activity"] + days
@@ -159,7 +160,7 @@ def register_callbacks(app) -> None:
         State("selected-date-store", "data"),
         State("user-store", "data"),
     )
-    def update_hours(cell_changed: dict, cur_date: str, volunteer_name: str) -> dict:
+    def update_hours(cell_changed: dict, cur_date: str, volunteer_name: str) -> str:
         if cell_changed is None:
             return no_update
         hours = float(cell_changed[0]["value"])
@@ -167,7 +168,7 @@ def register_callbacks(app) -> None:
         set_date = get_date_from_col(
             current_date=cur_date, col_id=str(cell_changed[0]["colId"])
         )
-        with psycopg2.connect(**db_params) as con:
+        with psycopg2.connect(**db_params) as con:  # type: ignore
             with con.cursor() as cur:
                 query = """
                 WITH v AS (
@@ -195,9 +196,9 @@ def register_callbacks(app) -> None:
     )
     def update_date(
         prev_clicks: int | None, next_clicks: int | None, cur_date: str
-    ) -> str:
+    ) -> str | PreventUpdate:
         if prev_clicks is None and next_clicks is None:
-            return no_update
+            raise PreventUpdate
         button = callback_context.triggered_id
         if button == "calendar-previous-button":
             new_date = date.fromisoformat(cur_date) - timedelta(days=7)
@@ -211,7 +212,7 @@ def register_callbacks(app) -> None:
     )
     def open_export_modal(n_clicks: int | None) -> bool:
         if n_clicks is None:
-            return no_update
+            raise PreventUpdate
         return True
 
     @app.callback(
@@ -228,7 +229,7 @@ def register_callbacks(app) -> None:
         if start is None and end is None:
             return no_update
 
-        with psycopg2.connect(**db_params) as con:
+        with psycopg2.connect(**db_params) as con:  # type: ignore
             with con.cursor() as cur:
                 query = """
                         SELECT *
@@ -238,7 +239,7 @@ def register_callbacks(app) -> None:
                         WHERE store.date BETWEEN %s AND %s
                         """
                 df = pd.read_sql_query(query, con=con, params=(start, end))
-        return dcc.send_data_frame(
+        return dcc.send_data_frame(  # type: ignore
             df.to_csv, f"volunteerio_export_{start}_to_{end}.csv", index=False
         )
 
