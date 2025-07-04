@@ -5,6 +5,7 @@ import pandas as pd
 from datetime import date
 import volunteerio.pages.login_page as login_page
 import volunteerio.pages.hours_page as hours_page
+import volunteerio.pages.about_page as about_page
 from volunteerio.callbacks import login_callbacks, hours_callbacks
 from volunteerio.server import create_app
 
@@ -20,12 +21,17 @@ navbar = dbc.Navbar(
     children=[
         # dbc.NavbarBrand("EV Metrix", className="ms-5"),
         dbc.Nav(
-            dbc.NavItem(
-                dbc.NavLink(
-                    "Home",
-                    href="/",
+            [
+                dbc.NavItem(
+                    dbc.NavLink(
+                        "Home",
+                        href="/",
+                    ),
                 ),
-            ),
+                dbc.NavItem(
+                    dbc.NavLink("About", href="/about"),
+                ),
+            ],
             pills=True,
         ),
     ],
@@ -59,17 +65,19 @@ app.layout = dmc.MantineProvider(
 @app.callback(
     Output("page-content", "children"),
     Input("url", "pathname"),
-    State("user-store", "data"),
+    # State("user-store", "data"),
     prevent_initial_call=True,
 )
-def display_page(pathname: str, user: str):
+def display_page(pathname: str):  # , user: str):
 
-    if not user:
+    # if not user:
+    #     return login_page.layout
+    if pathname == "/":
         return login_page.layout
-    elif pathname == "/":
-        return login_page.layout
-
     elif pathname == "/hours":
         return hours_page.layout
+    elif pathname == "/about":
+        return about_page.layout
+
     else:
         return "404 page not found"

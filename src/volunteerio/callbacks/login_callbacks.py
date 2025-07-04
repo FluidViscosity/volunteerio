@@ -43,7 +43,7 @@ def register_login_callbacks(app):
                 res = [x[0] for x in res]
                 if res is None:
                     raise Exception("Can't find users")
-                res.append("Add new...")
+                res.insert(0, "Add new...")
         return res
 
     @app.callback(

@@ -32,9 +32,9 @@ layout = dbc.Container(
                 dbc.Row(
                     dbc.Col(
                         dbc.Button(
-                            "Login", id="login-button", color="primary", n_clicks=0
+                            "Log hours", id="login-button", color="primary", n_clicks=0
                         ),
-                        width=4,
+                        # width=4,
                         align="center",
                     ),
                     justify="center",

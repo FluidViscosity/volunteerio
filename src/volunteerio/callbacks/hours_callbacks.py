@@ -15,7 +15,7 @@ from volunteerio.db_config import db_params
 import dash_bootstrap_components as dbc
 import dash_ag_grid as dag
 import psycopg2
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 
 def get_week_dates(selected_date: str):
@@ -120,8 +120,7 @@ def register_callbacks(app) -> None:
     @app.callback(
         Output("hours-user-title", "children"),
         Output("hours-table-col", "children"),
-        # Output("calendar-table", "columns", allow_duplicate=True),
-        # Output("calendar-table", "data", allow_duplicate=True),
+        Output("month-label", "children"),
         Input("url", "pathname"),
         Input("selected-date-store", "data"),
         State("user-store", "data"),
@@ -136,23 +135,28 @@ def register_callbacks(app) -> None:
                 id="hours-table",
                 columnDefs=[
                     (
-                        {"field": i, "editable": False}
+                        {"field": i, "editable": False, "flex": 1}
                         if "activity" in i.lower()
                         else {
                             "field": i,
                             "editable": True,
                             "cellDataType": "number",
+                            "flex": 1,
                         }
                     )
                     for i in cols
                 ],
                 rowData=data,
                 columnSize="sizeToFit",
-                dashGridOptions={"animateRows": False},
+                dashGridOptions={
+                    "animateRows": False,
+                },
             ),
         )
+        date = datetime.fromisoformat(cur_date)
+        month = date.strftime("%B")
 
-        return html.H1(user, style={"textAlign": "center"}), table
+        return html.H1(user, style={"textAlign": "center"}), table, month
 
     @app.callback(
         Output("cell-changed", "children"),
@@ -232,7 +236,12 @@ def register_callbacks(app) -> None:
         with psycopg2.connect(**db_params) as con:  # type: ignore
             with con.cursor() as cur:
                 query = """
-                        SELECT *
+                        SELECT store.id as record_id,
+                        store.date as date,
+                        v.id as volunteer_id,
+                        v.name as volunteer_name,
+                        a.activity as activity_name,
+                        store.hours as hours
                         FROM activity_store store
                         LEFT JOIN volunteers v ON v.id = store.volunteer_id
                         LEFT JOIN activities a ON a.id = store.activity_id  

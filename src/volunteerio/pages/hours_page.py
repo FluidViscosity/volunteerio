@@ -9,6 +9,7 @@ layout = dbc.Container(
         dbc.Row(
             [
                 dbc.Col(dbc.Button("<", id="calendar-previous-button"), width=1),
+                dbc.Col(html.H3(id="month-label"), class_name="text-center", width=10),
                 dbc.Col(
                     dbc.Button(">", id="calendar-next-button"),
                     width=1,
