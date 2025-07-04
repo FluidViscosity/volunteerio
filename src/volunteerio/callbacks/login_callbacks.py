@@ -69,6 +69,7 @@ def register_login_callbacks(app):
     @app.callback(
         Output("user-store", "data", allow_duplicate=True),
         Output("new-user-modal", "is_open", allow_duplicate=True),
+        Output("new-user-error", "children", allow_duplicate=True),
         Output("url", "pathname", allow_duplicate=True),
         Input("new-user-button", "n_clicks"),
         State("new-user-input", "value"),
@@ -77,5 +78,27 @@ def register_login_callbacks(app):
     def new_user_callback(n_clicks: int, new_user):
         if n_clicks is None:
             return no_update
+        if new_user is None or new_user.strip() == "":
+            return (
+                no_update,
+                True,
+                "Please enter a valid name.",
+                no_update,
+            )
+        new_user = new_user.strip()
+        if len(new_user) < 3:
+            return (
+                no_update,
+                True,
+                "Name must be at least 3 characters long.",
+                no_update,
+            )
         if is_username_available(new_user):
-            return new_user, False, "/hours"
+            return new_user, False, "", "/hours"
+        else:
+            return (
+                no_update,
+                True,
+                "User already exists. Please choose a different name.",
+                no_update,
+            )

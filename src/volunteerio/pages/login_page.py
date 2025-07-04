@@ -47,6 +47,7 @@ layout = dbc.Container(
                         dbc.ModalBody(
                             children=[
                                 dbc.Input(id="new-user-input"),
+                                html.Div(id="new-user-error", className="text-danger"),
                                 dbc.Button(
                                     "Add", color="primary", id="new-user-button"
                                 ),
