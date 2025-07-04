@@ -15,11 +15,39 @@ hours_callbacks.register_callbacks(app)
 
 _dash_renderer._set_react_version("18.2.0")
 
+navbar = dbc.Navbar(
+    id="navbar",
+    children=[
+        # dbc.NavbarBrand("EV Metrix", className="ms-5"),
+        dbc.Nav(
+            dbc.NavItem(
+                dbc.NavLink(
+                    "Home",
+                    href="/",
+                ),
+            ),
+            pills=True,
+        ),
+    ],
+    color="dark",
+    dark=True,
+    className="navbar-expand-lg bg-primary",
+    style={"min-height": "70px"},
+)
 app.layout = dmc.MantineProvider(
     html.Div(
         [
             dcc.Location(id="url", refresh=False, pathname="/login"),
-            dbc.Container(id="page-content", children=[login_page.layout], fluid=True),
+            navbar,
+            dbc.Container(
+                id="page-content",
+                children=[login_page.layout],
+                fluid=True,
+                style={
+                    "maxHeight": "calc(100vh - 70px)",
+                    "overflowY": "hidden",
+                },
+            ),
             dcc.Store(id="user-store", data=""),
             dcc.Store(id="selected-date-store", data=date.today().isoformat()),
             dcc.Download(id="export-download"),
