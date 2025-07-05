@@ -19,10 +19,11 @@ def is_username_available(new_user: str) -> bool:
 
             # add new user
             query = """
-                    INSERT INTO volunteers (name,email)
-                    VALUES (%s,'')
+                    INSERT INTO volunteers (name)
+                    VALUES (%s)
                     """
             cur.execute(query, (new_user,))
+            con.commit()
     return True
 
 

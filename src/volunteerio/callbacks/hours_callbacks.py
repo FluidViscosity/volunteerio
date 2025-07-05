@@ -189,6 +189,7 @@ def register_callbacks(app) -> None:
                 """
 
                 cur.execute(query, (volunteer_name, activity, set_date, hours))
+                con.commit()
 
         return f"{cell_changed}"
 
