@@ -116,11 +116,45 @@ def create_calendar(user: str, date: str) -> tuple[list[str], list[dict]]:
     return cols, data
 
 
+def get_user_stats(user: str, date: str) -> tuple[float, str]:
+
+    with psycopg2.connect(**db_params) as con:
+        with con.cursor() as cur:
+            query = """
+                    SELECT SUM(store.hours)
+                    FROM activity_store store
+                    JOIN volunteers v ON store.volunteer_id = v.id
+                    WHERE v.name = %s
+                    AND EXTRACT(MONTH FROM store.date) = %s
+                    AND EXTRACT(YEAR FROM store.date) = %s;
+                    """
+            date_obj = datetime.fromisoformat(date)
+            cur.execute(
+                query,
+                (user, date_obj.month, date_obj.year),
+            )
+            hours_this_month = cur.fetchone()[0] or 0
+            query = """
+                    SELECT MAX(store.date)
+                    FROM activity_store store
+                    JOIN volunteers v ON store.volunteer_id = v.id
+                    WHERE v.name = %s;
+                    """
+            cur.execute(query, (user,))
+            last_visit = cur.fetchone()[0]
+            if last_visit is not None:
+                last_visit = last_visit.strftime("%Y-%m-%d")
+            else:
+                last_visit = "No visits yet"
+    return hours_this_month, last_visit
+
+
 def register_callbacks(app) -> None:
     @app.callback(
         Output("hours-user-title", "children"),
         Output("hours-table-col", "children"),
         Output("month-label", "children"),
+        Output("hours-card-body", "children"),
         Input("url", "pathname"),
         Input("selected-date-store", "data"),
         State("user-store", "data"),
@@ -130,6 +164,16 @@ def register_callbacks(app) -> None:
             return no_update
 
         cols, data = create_calendar(user, cur_date)
+        hours_this_month, last_visit = get_user_stats(user, cur_date)
+        user_stats = html.Div(
+            [
+                html.P(f"Completed hours this month: {hours_this_month:.0f}"),
+                html.P(f"Last visit: {last_visit}"),
+            ]
+        )
+
+        NAVBAR_HEIGHT = 70
+        EXTRA_HEIGHT = 100
         table = (
             dag.AgGrid(
                 id="hours-table",
@@ -151,12 +195,13 @@ def register_callbacks(app) -> None:
                 dashGridOptions={
                     "animateRows": False,
                 },
+                style={"height": f"calc(100vh - {NAVBAR_HEIGHT}px - {EXTRA_HEIGHT}px)"},
             ),
         )
         date = datetime.fromisoformat(cur_date)
         month = date.strftime("%B")
 
-        return html.H1(user, style={"textAlign": "center"}), table, month
+        return html.H1(user, style={"textAlign": "center"}), table, month, user_stats
 
     @app.callback(
         Output("cell-changed", "children"),
