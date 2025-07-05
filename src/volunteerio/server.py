@@ -21,6 +21,7 @@ def create_app():
         external_stylesheets=[dbc.themes.SOLAR],
         transforms=[ServersideOutputTransform()],
         # suppress_callback_exceptions=True,
+        title="VolunteerIO",
     )
     # with server.app_context():
     #     db.create_all()
