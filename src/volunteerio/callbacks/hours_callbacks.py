@@ -147,7 +147,7 @@ def register_callbacks(app) -> None:
                     for i in cols
                 ],
                 rowData=data,
-                columnSize="sizeToFit",
+                columnSize="autoSize",
                 dashGridOptions={
                     "animateRows": False,
                 },
