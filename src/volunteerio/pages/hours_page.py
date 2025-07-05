@@ -19,7 +19,8 @@ layout = dbc.Container(
                                             dbc.Row(
                                                 dbc.Col(
                                                     dbc.Button(
-                                                        "Export", id="open-export-modal"
+                                                        "Export all",
+                                                        id="open-export-modal",
                                                     )
                                                 )
                                             ),
@@ -88,5 +89,6 @@ layout = dbc.Container(
         ),
         html.P(id="cell-changed", style={"display": "None"}),
     ],
+    fluid=True,  # This makes it full width
     # className="d-flex flex-column align-items-center justify-content-center vh-100",
 )

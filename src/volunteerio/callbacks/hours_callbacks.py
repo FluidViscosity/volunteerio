@@ -1,18 +1,15 @@
-from copy import deepcopy
 from dash import (
     html,
     Input,
     Output,
     State,
     no_update,
-    dash_table,
     callback_context,
     dcc,
 )
 from dash.exceptions import PreventUpdate
 import pandas as pd
 from volunteerio.db_config import db_params
-import dash_bootstrap_components as dbc
 import dash_ag_grid as dag
 import psycopg2
 from datetime import date, datetime, timedelta
@@ -99,9 +96,48 @@ def get_date_from_col(current_date: str, col_id: str):
             return d
 
 
+def sort_cols(display_hours: list[tuple]) -> list[tuple]:
+    ORDER = [
+        "Animal pest control",
+        "Tracks",
+        "Nursery work",
+        "Native species protection",
+        "Weed control",
+        "Tree planting",
+        "Fences",
+        "Admin (office work)",
+        "Buildings, non-heritage",
+        "Litter control",
+        "Livestock care",
+        "Kauri Dieback",
+        "Guided walks",
+        "Plant care / mulching, fertilising etc",
+        "Event management",
+        "Fundraising",
+        "Gardens & grounds",
+        "Heritage buildings",
+        "Seed collection",
+    ]
+    # sort the display_hours by the ORDER list
+    sorted_display_hours = []
+    for activity in ORDER:
+        for row in display_hours:
+            if row[0].lower() == activity.lower():
+                sorted_display_hours.append(row)
+                break
+
+    # add the activities that are not in ORDER at the end
+    for row in display_hours:
+        if row[0].lower() not in ORDER:
+            sorted_display_hours.append(row)
+
+    return sorted_display_hours
+
+
 def create_calendar(user: str, date: str) -> tuple[list[str], list[dict]]:
 
     days, display_hours = get_hours(user, date)
+    sorted_display_hours = sort_cols(display_hours)
     cols = ["Activity"] + days
     # convert display hours to a list of dictionaries
     data = []
@@ -109,7 +145,7 @@ def create_calendar(user: str, date: str) -> tuple[list[str], list[dict]]:
         data.append(
             {
                 z[0]: z[1].title() if isinstance(z[1], str) else float(z[1])
-                for z in zip(cols, display_hours[i])
+                for z in zip(cols, sorted_display_hours[i])
             }
         )
 
