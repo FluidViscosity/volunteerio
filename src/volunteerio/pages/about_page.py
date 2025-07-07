@@ -21,7 +21,7 @@ layout = dbc.Container(
         html.Div(
             [
                 html.P(
-                    "Only a name is required for the website, which is stored securely. Your data will never be sold."
+                    "Only a name is required for the website, which will be accessible by anyone at this website. Your data will never be sold."
                 ),
             ],
         ),
