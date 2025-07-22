@@ -40,22 +40,6 @@ layout = dbc.Container(
                     justify="center",
                     className="d-grid gap-2 col-4 mx-auto",
                 ),
-                dbc.Modal(
-                    id="new-user-modal",
-                    children=[
-                        dbc.ModalHeader("Add new user"),
-                        dbc.ModalBody(
-                            children=[
-                                dbc.Input(id="new-user-input"),
-                                html.Div(id="new-user-error", className="text-danger"),
-                                dbc.Button(
-                                    "Add", color="primary", id="new-user-button"
-                                ),
-                            ]
-                        ),
-                    ],
-                    is_open=False,
-                ),
             ],
             className="w-100",
         ),

@@ -6,13 +6,16 @@ from datetime import date
 import volunteerio.pages.login_page as login_page
 import volunteerio.pages.hours_page as hours_page
 import volunteerio.pages.about_page as about_page
-from volunteerio.callbacks import login_callbacks, hours_callbacks
+import volunteerio.pages.admin_page as admin_page
+from volunteerio.callbacks import login_callbacks, hours_callbacks, admin_callbacks
 from volunteerio.server import create_app
 
 app, server = create_app()
 
 login_callbacks.register_login_callbacks(app)
 hours_callbacks.register_callbacks(app)
+admin_callbacks.register_callbacks(app)
+
 
 _dash_renderer._set_react_version("18.2.0")
 
@@ -31,6 +34,7 @@ navbar = dbc.Navbar(
                 dbc.NavItem(
                     dbc.NavLink("About", href="/about"),
                 ),
+                dbc.NavItem(dbc.NavLink("Admin", href="/admin")),
             ],
             pills=True,
         ),
@@ -78,6 +82,8 @@ def display_page(pathname: str):  # , user: str):
         return hours_page.layout
     elif pathname == "/about":
         return about_page.layout
+    elif pathname == "/admin":
+        return admin_page.layout
 
     else:
         return "404 page not found"

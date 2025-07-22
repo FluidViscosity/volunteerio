@@ -294,14 +294,6 @@ def register_callbacks(app) -> None:
         return new_date.isoformat()
 
     @app.callback(
-        Output("export-modal", "is_open"), Input("open-export-modal", "n_clicks")
-    )
-    def open_export_modal(n_clicks: int | None) -> bool:
-        if n_clicks is None:
-            raise PreventUpdate
-        return True
-
-    @app.callback(
         Output("export-download", "data"),
         Input("export-modal-button", "n_clicks"),
         State("export-dates", "start_date"),
