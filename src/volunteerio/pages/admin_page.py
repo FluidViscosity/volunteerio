@@ -9,17 +9,38 @@ layout = dbc.Container(
             html.H1("Admin"),
             style={"marginBottom": "20px"},
         ),
+        dbc.Row(html.H2("Export Data")),
         dbc.Row(
-            [
-                # dbc.Input(id="new-user-input", placeholder="New user"),
-                dbc.Button("New user", id="new-user-modal-button", n_clicks=0),
-            ]
+            html.P(
+                "Please export volunteer data for the period you are interested in. You may choose to export raw data or a summary of volunteer hours and activities."
+            )
+        ),
+        dbc.Row(
+            dbc.Col(
+                dbc.Button(
+                    "Export",
+                    id="open-export-modal",
+                ),
+                width=2,
+                align="center",
+            )
         ),
         html.Br(),
         dbc.Row(
-            dbc.Button(
-                "Export all",
-                id="open-export-modal",
+            html.H2("Users"),
+        ),
+        dbc.Row(
+            html.P(
+                "New users are to be added by park rangers or administrators only. For deletions contact the site administrator."
+            ),
+        ),
+        dbc.Row(
+            dbc.Col(
+                [
+                    dbc.Button("New user", id="new-user-modal-button", n_clicks=0),
+                ],
+                width=2,
+                align="center",
             )
         ),
         dbc.Modal(
@@ -50,16 +71,34 @@ layout = dbc.Container(
                                     max_date_allowed=date.today(),
                                     minimum_nights=0,
                                 ),
-                                width=8,
+                                width=6,
                             ),
                             dbc.Col(
-                                dbc.Button("Export", id="export-modal-button"),
-                                width=4,
+                                [
+                                    dbc.Button(
+                                        "Export Raw Data",
+                                        id="export-modal-button",
+                                        style={"margin-bottom": "8px"},
+                                    ),
+                                    dbc.Button(
+                                        "Export Volunteer Summary",
+                                        id="export-volunteer-summary-button",
+                                        style={"margin-bottom": "8px"},
+                                    ),
+                                    dbc.Button(
+                                        "Export Activity Summary",
+                                        id="export-activity-summary-button",
+                                        style={"margin-bottom": "8px"},
+                                    ),
+                                ],
+                                width=6,
+                                # class_name="m-2",
                             ),
                         ]
                     )
                 ),
             ],
+            size="lg",
         ),
     ],
 )

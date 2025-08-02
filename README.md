@@ -4,14 +4,10 @@
 To run this software run the `src/volunteerio/run.py` file
 
 ## TODOS
-- DONE: create a db schema for user store, park activities, activity store
-- DONE: make sure username is unique
-- DONE: fetch results from db
-- DONE: create a calendar view that can be moved along a calendar 
-- create an export button,
-- create tables if app is starting up for first time Create table if not exists (incl. constraints)
-- deploy on raspberrypi
-- show to rangers
+Delete names?
+make adding names guarded by a 'rangers only' paragraph
+export: sort by name and by activity
+Show some basic stats on admin page. 
 
 
 ## DB Schema
