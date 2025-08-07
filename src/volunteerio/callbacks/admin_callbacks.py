@@ -14,7 +14,7 @@ def is_username_available(new_user: str) -> bool:
             cur.execute(query)
             res = cur.fetchall()
             for user in res:
-                if new_user == str(user[0]):
+                if new_user.lower() == str(user[0]).lower():
                     return False
 
             # add new user
