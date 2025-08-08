@@ -324,46 +324,7 @@ def register_callbacks(app) -> None:
                 df = pd.read_sql_query(query, con=con, params=(start, end))
                 df = df.sort_values(by=["volunteer_name", "date", "activity_name"])
         return dcc.send_data_frame(  # type: ignore
-            df.to_csv, f"volunteerio_export_{start}_to_{end}.csv", index=False
-        )
-
-    @app.callback(
-        Output("export-download", "data", allow_duplicate=True),
-        Input("export-volunteer-summary-button", "n_clicks"),
-        State("export-dates", "start_date"),
-        State("export-dates", "end_date"),
-        State("user-store", "data"),
-        prevent_initial_call=True,
-    )
-    def export_summary(n_clicks, start, end, user):
-        if not n_clicks:
-            return no_update
-        if start is None and end is None:
-            return no_update
-
-        with psycopg2.connect(**db_params) as con:
-            query = """
-                SELECT v.name as volunteer_name,
-                    a.activity as activity_name,
-                    store.hours as hours
-                FROM activity_store store
-                LEFT JOIN volunteers v ON v.id = store.volunteer_id
-                LEFT JOIN activities a ON a.id = store.activity_id  
-                WHERE store.date BETWEEN %s AND %s
-            """
-            df = pd.read_sql_query(query, con=con, params=(start, end))
-        # Create the pivot table
-        pivot = pd.pivot_table(
-            df,
-            index=["volunteer_name"],
-            values="hours",
-            aggfunc="sum",
-            fill_value=0,
-        ).reset_index()
-        return dcc.send_data_frame(
-            pivot.to_csv,
-            f"volunteerio_volunteer_summary_{start}_to_{end}.csv",
-            index=False,
+            df.to_csv, f"volunteerio_raw_data_{start}_to_{end}.csv", index=False
         )
 
     @app.callback(
@@ -374,7 +335,7 @@ def register_callbacks(app) -> None:
         State("user-store", "data"),
         prevent_initial_call=True,
     )
-    def export_summary(n_clicks, start, end, user):
+    def export_activity_summary(n_clicks, start, end, user):
         if not n_clicks:
             return no_update
         if start is None and end is None:
@@ -382,30 +343,32 @@ def register_callbacks(app) -> None:
 
         with psycopg2.connect(**db_params) as con:
             query = """
-                SELECT v.name as volunteer_name,
-                    a.activity as activity_name,
-                    store.hours as hours
-                FROM activity_store store
-                LEFT JOIN volunteers v ON v.id = store.volunteer_id
-                LEFT JOIN activities a ON a.id = store.activity_id  
-                WHERE store.date BETWEEN %s AND %s
-            """
+                    SELECT 
+                        v.name AS volunteer_name,
+                        a.activity AS activity_name,
+                        COALESCE(store.hours, 0) AS hours
+                    FROM volunteers v
+                    CROSS JOIN activities a
+                    LEFT JOIN activity_store store
+                        ON v.id = store.volunteer_id
+                        AND a.id = store.activity_id
+                        AND store.date BETWEEN %s AND %s
+                    ORDER BY v.name, a.activity;
+                """
             df = pd.read_sql_query(query, con=con, params=(start, end))
         # Create the pivot table
         pivot = pd.pivot_table(
             df,
-            index=["activity_name"],
+            index=["volunteer_name"],
+            columns=["activity_name"],
             values="hours",
             aggfunc="sum",
             fill_value=0,
+            margins=True,
+            margins_name="Totals",
         ).reset_index()
         return dcc.send_data_frame(
             pivot.to_csv,
-            f"volunteerio_activity_summary_{start}_to_{end}.csv",
+            f"volunteerio_summary_{start}_to_{end}.csv",
             index=False,
         )
-
-
-# https://github.com/MatthieuRu/run-together/blob/main/dash_apps/run_together/components/calendar_training.py
-# https://pip-install-python.com/pip/full_calendar_component
-# https://medium.com/@matthieu.ru/5f285bc7de9b

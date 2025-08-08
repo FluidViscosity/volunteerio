@@ -2,6 +2,8 @@ import dash_bootstrap_components as dbc
 from dash import html, dcc
 from datetime import date
 
+import pandas as pd
+
 layout = dbc.Container(
     [
         html.Br(),
@@ -70,6 +72,8 @@ layout = dbc.Container(
                                     min_date_allowed="2025-01-01",
                                     max_date_allowed=date.today(),
                                     minimum_nights=0,
+                                    start_date=date.today()
+                                    - pd.tseries.offsets.MonthBegin(2),
                                 ),
                                 width=6,
                             ),
@@ -81,12 +85,7 @@ layout = dbc.Container(
                                         style={"margin-bottom": "8px"},
                                     ),
                                     dbc.Button(
-                                        "Export Volunteer Summary",
-                                        id="export-volunteer-summary-button",
-                                        style={"margin-bottom": "8px"},
-                                    ),
-                                    dbc.Button(
-                                        "Export Activity Summary",
+                                        "Export Summary",
                                         id="export-activity-summary-button",
                                         style={"margin-bottom": "8px"},
                                     ),
