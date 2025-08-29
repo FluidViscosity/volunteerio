@@ -1,5 +1,6 @@
 from dash import Output, Input, no_update, State
 import psycopg2
+from datetime import date
 
 from volunteerio.db_config import db_params
 
@@ -79,3 +80,11 @@ def register_callbacks(app):
         if n_clicks is None:
             return no_update
         return True
+
+    @app.callback(
+        Output("export-dates", "max_date_allowed"), Input("export-modal", "is_open")
+    )
+    def update_max_date(is_open):
+        if is_open:
+            return date.today()
+        return no_update
