@@ -1,4 +1,5 @@
 from dash import Output, Input, no_update, State
+import pandas as pd
 import psycopg2
 from datetime import date
 
@@ -82,9 +83,12 @@ def register_callbacks(app):
         return True
 
     @app.callback(
-        Output("export-dates", "max_date_allowed"), Input("export-modal", "is_open")
+        Output("export-dates", "max_date_allowed"),
+        Output("export-dates", "start_date"),
+        Input("export-modal", "is_open"),
     )
     def update_max_date(is_open):
         if is_open:
-            return date.today()
+            start_date = date.today() - pd.tseries.offsets.MonthBegin(1)
+            return date.today(), start_date
         return no_update
