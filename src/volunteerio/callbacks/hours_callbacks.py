@@ -141,13 +141,18 @@ def create_calendar(user: str, date: str) -> tuple[list[str], list[dict]]:
     cols = ["Activity"] + days
     # convert display hours to a list of dictionaries
     data = []
+
     for i in range(len(display_hours)):
-        data.append(
-            {
-                z[0]: z[1].title() if isinstance(z[1], str) else float(z[1])
-                for z in zip(cols, sorted_display_hours[i])
-            }
-        )
+        tmp = {}
+        for z in zip(cols, sorted_display_hours[i]):
+            if isinstance(z[1], str):
+                val = z[1].title()
+            elif z[1] == 0:
+                val = None
+            else:
+                val = float(z[1])
+            tmp.update({z[0]: val})
+        data.append(tmp)
 
     return cols, data
 
