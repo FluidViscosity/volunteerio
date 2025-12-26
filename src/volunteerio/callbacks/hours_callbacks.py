@@ -96,6 +96,43 @@ def get_date_from_col(current_date: str, col_id: str):
             return d
 
 
+def get_raw_data_all_users(con, start, end) -> pd.DataFrame:
+    query = """
+            SELECT store.id as record_id,
+            store.date as date,
+            v.id as volunteer_id,
+            v.name as volunteer_name,
+            a.activity as activity_name,
+            store.hours as hours
+            FROM activity_store store
+            LEFT JOIN volunteers v ON v.id = store.volunteer_id
+            LEFT JOIN activities a ON a.id = store.activity_id  
+            WHERE store.date BETWEEN %s AND %s
+            """
+    df = pd.read_sql_query(query, con=con, params=(start, end))
+    df = df.sort_values(by=["volunteer_name", "date", "activity_name"])
+    return df
+
+
+def get_raw_data_active_users(con, start, end) -> pd.DataFrame:
+    query = """
+            SELECT store.id as record_id,
+            store.date as date,
+            v.id as volunteer_id,
+            v.name as volunteer_name,
+            a.activity as activity_name,
+            store.hours as hours
+            FROM activity_store store
+            LEFT JOIN volunteers v ON v.id = store.volunteer_id
+            LEFT JOIN activities a ON a.id = store.activity_id  
+            WHERE store.date BETWEEN %s AND %s
+            AND v.is_active=TRUE
+            """
+    df = pd.read_sql_query(query, con=con, params=(start, end))
+    df = df.sort_values(by=["volunteer_name", "date", "activity_name"])
+    return df
+
+
 def sort_cols(display_hours: list[tuple]) -> list[tuple]:
     ORDER = [
         "Animal pest control",
@@ -188,6 +225,57 @@ def get_user_stats(user: str, date: str) -> tuple[float, str]:
             else:
                 last_visit = "No visits yet"
     return hours_this_month, last_visit
+
+
+def create_summary_pivot_table(df: pd.DataFrame) -> pd.DataFrame:
+    # Create the pivot table
+    return pd.pivot_table(
+        df,
+        index=["volunteer_name"],
+        columns=["activity_name"],
+        values="hours",
+        aggfunc="sum",
+        fill_value=0,
+        margins=True,
+        margins_name="Totals",
+    ).reset_index()
+
+
+def get_summary_data_active_users(con, start, end) -> pd.DataFrame:
+
+    query = """
+            SELECT 
+                v.name AS volunteer_name,
+                a.activity AS activity_name,
+                COALESCE(store.hours, 0) AS hours
+            FROM volunteers v
+            CROSS JOIN activities a
+            LEFT JOIN activity_store store
+                ON v.id = store.volunteer_id
+                AND a.id = store.activity_id
+                AND store.date BETWEEN %s AND %s
+            WHERE v.is_active=TRUE
+            ORDER BY v.name, a.activity;
+        """
+    return pd.read_sql_query(query, con=con, params=(start, end))
+
+
+def get_summary_data_all_users(con, start, end) -> pd.DataFrame:
+
+    query = """
+            SELECT 
+                v.name AS volunteer_name,
+                a.activity AS activity_name,
+                COALESCE(store.hours, 0) AS hours
+            FROM volunteers v
+            CROSS JOIN activities a
+            LEFT JOIN activity_store store
+                ON v.id = store.volunteer_id
+                AND a.id = store.activity_id
+                AND store.date BETWEEN %s AND %s
+            ORDER BY v.name, a.activity;
+        """
+    return pd.read_sql_query(query, con=con, params=(start, end))
 
 
 def register_callbacks(app) -> None:
@@ -304,8 +392,11 @@ def register_callbacks(app) -> None:
         State("export-dates", "start_date"),
         State("export-dates", "end_date"),
         State("user-store", "data"),
+        State("export-include-inactive-users-check", "value"),
     )
-    def export_raw_data(n_clicks: int | None, start: str, end: str, user: str):
+    def export_raw_data(
+        n_clicks: int | None, start: str, end: str, user: str, include_inactive: bool
+    ):
         if n_clicks is None:
             return no_update
 
@@ -313,21 +404,12 @@ def register_callbacks(app) -> None:
             return no_update
 
         with psycopg2.connect(**db_params) as con:  # type: ignore
-            with con.cursor() as cur:
-                query = """
-                        SELECT store.id as record_id,
-                        store.date as date,
-                        v.id as volunteer_id,
-                        v.name as volunteer_name,
-                        a.activity as activity_name,
-                        store.hours as hours
-                        FROM activity_store store
-                        LEFT JOIN volunteers v ON v.id = store.volunteer_id
-                        LEFT JOIN activities a ON a.id = store.activity_id  
-                        WHERE store.date BETWEEN %s AND %s
-                        """
-                df = pd.read_sql_query(query, con=con, params=(start, end))
-                df = df.sort_values(by=["volunteer_name", "date", "activity_name"])
+            df = (
+                get_raw_data_active_users(con, start, end)
+                if include_inactive
+                else get_raw_data_all_users(con, start, end)
+            )
+
         return dcc.send_data_frame(  # type: ignore
             df.to_csv, f"volunteerio_raw_data_{start}_to_{end}.csv", index=False
         )
@@ -338,40 +420,23 @@ def register_callbacks(app) -> None:
         State("export-dates", "start_date"),
         State("export-dates", "end_date"),
         State("user-store", "data"),
+        State("export-include-inactive-users-check", "value"),
         prevent_initial_call=True,
     )
-    def export_summary(n_clicks, start, end, user):
+    def export_summary(n_clicks, start, end, user, include_inactive: bool):
         if not n_clicks:
             return no_update
         if start is None and end is None:
             return no_update
 
         with psycopg2.connect(**db_params) as con:
-            query = """
-                    SELECT 
-                        v.name AS volunteer_name,
-                        a.activity AS activity_name,
-                        COALESCE(store.hours, 0) AS hours
-                    FROM volunteers v
-                    CROSS JOIN activities a
-                    LEFT JOIN activity_store store
-                        ON v.id = store.volunteer_id
-                        AND a.id = store.activity_id
-                        AND store.date BETWEEN %s AND %s
-                    ORDER BY v.name, a.activity;
-                """
-            df = pd.read_sql_query(query, con=con, params=(start, end))
-        # Create the pivot table
-        pivot = pd.pivot_table(
-            df,
-            index=["volunteer_name"],
-            columns=["activity_name"],
-            values="hours",
-            aggfunc="sum",
-            fill_value=0,
-            margins=True,
-            margins_name="Totals",
-        ).reset_index()
+            df = (
+                get_summary_data_all_users(con, start, end)
+                if include_inactive
+                else get_summary_data_active_users(con, start, end)
+            )
+        pivot = create_summary_pivot_table(df)
+
         return dcc.send_data_frame(
             pivot.to_csv,
             f"volunteerio_summary_{start}_to_{end}.csv",

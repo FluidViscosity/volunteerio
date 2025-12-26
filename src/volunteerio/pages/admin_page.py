@@ -79,6 +79,11 @@ layout = dbc.Container(
                             ),
                             dbc.Col(
                                 [
+                                    dbc.Checkbox(
+                                        id="export-include-inactive-users-check",
+                                        label="Include inactive users",
+                                        value=False,
+                                    ),
                                     dbc.Button(
                                         "Export Raw Data",
                                         id="export-modal-button",
