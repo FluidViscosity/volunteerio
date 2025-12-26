@@ -17,7 +17,8 @@ def register_login_callbacks(app):
             with con.cursor() as cur:
                 query = """
                         SELECT volunteers.name
-                        FROM volunteers;
+                        FROM volunteers
+                        WHERE volunteers.is_active=TRUE;
                         """
                 cur.execute(query)
                 res = cur.fetchall()
