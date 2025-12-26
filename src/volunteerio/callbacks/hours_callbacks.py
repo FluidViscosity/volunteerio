@@ -305,7 +305,7 @@ def register_callbacks(app) -> None:
         State("export-dates", "end_date"),
         State("user-store", "data"),
     )
-    def export_data(n_clicks: int | None, start: str, end: str, user: str):
+    def export_raw_data(n_clicks: int | None, start: str, end: str, user: str):
         if n_clicks is None:
             return no_update
 
@@ -340,7 +340,7 @@ def register_callbacks(app) -> None:
         State("user-store", "data"),
         prevent_initial_call=True,
     )
-    def export_activity_summary(n_clicks, start, end, user):
+    def export_summary(n_clicks, start, end, user):
         if not n_clicks:
             return no_update
         if start is None and end is None:
