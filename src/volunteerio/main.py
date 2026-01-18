@@ -19,49 +19,73 @@ admin_callbacks.register_callbacks(app)
 
 _dash_renderer._set_react_version("18.2.0")
 
-navbar = dbc.Navbar(
-    id="navbar",
-    children=[
-        # dbc.NavbarBrand("EV Metrix", className="ms-5"),
-        dbc.Nav(
-            [
-                dbc.NavItem(
-                    dbc.NavLink(
-                        "Home",
-                        href="/",
-                    ),
-                ),
-                dbc.NavItem(
-                    dbc.NavLink("About", href="/about"),
-                ),
-                dbc.NavItem(dbc.NavLink("Admin", href="/admin")),
-            ],
-            pills=True,
-        ),
-    ],
-    color="dark",
-    dark=True,
-    className="navbar-expand-lg bg-primary",
-    style={"min-height": "70px"},
-)
 app.layout = dmc.MantineProvider(
-    html.Div(
-        [
-            dcc.Location(id="url", refresh=False, pathname="/login"),
-            navbar,
-            dbc.Container(
-                id="page-content",
-                children=[login_page.layout],
-                fluid=True,
+    dmc.AppShell(
+        header={"height": 60},
+        footer={"height": 20},
+        children=[
+            dmc.AppShellHeader(
+                bg="#00313D",
+                bd="#002B36",
+                children=[
+                    dmc.Group(
+                        [
+                            dmc.Title("Volunteerio", order=3),
+                            dmc.Group(
+                                [
+                                    dmc.Anchor("Home", href="/"),
+                                    dmc.Anchor("About", href="/about"),
+                                ],
+                                gap="md",
+                            ),
+                        ],
+                        justify="space-between",
+                        h="100%",
+                        px="md",
+                    )
+                ],
+            ),
+            dmc.AppShellFooter(
+                children=[
+                    dmc.Group(
+                        dmc.Anchor(
+                            "Admin",
+                            href="/admin",
+                            style={"fontSize": "14px"},
+                        ),
+                        justify="flex-end",
+                        px="md",
+                    )
+                ],
+                bg="#002B36",
+                bd="#002B36",
+            ),
+            dmc.AppShellMain(
+                [
+                    dcc.Location(id="url", refresh=False),
+                    dbc.Container(
+                        id="page-content",
+                        children=[login_page.layout],
+                        fluid=True,
+                        style={
+                            "maxHeight": "calc(100vh - 70px)",
+                            "overflowY": "hidden",
+                        },
+                    ),
+                    dcc.Store(id="user-store", data=""),
+                    dcc.Store(id="nav-open", data=False),
+                    dcc.Store(
+                        id="selected-date-store",
+                        data=date.today().isoformat(),
+                    ),
+                    dcc.Download(id="export-download"),
+                ],
                 style={
-                    "maxHeight": "calc(100vh - 70px)",
-                    "overflowY": "hidden",
+                    "height": "calc(100vh - 60px - 20px)",
+                    "overflow": "hidden",
                 },
             ),
-            dcc.Store(id="user-store", data=""),
-            dcc.Store(id="selected-date-store", data=date.today().isoformat()),
-            dcc.Download(id="export-download"),
-        ]
+        ],
     )
 )
 

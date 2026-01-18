@@ -11,5 +11,5 @@ def open_browser() -> None:
 
 if __name__ == "__main__":
     # Timer(1, open_browser).start()
-    # app.run(debug=True, port=8050, use_reloader=False)
-    serve(app.server, host="0.0.0.0", port=8050, threads=10)
+    app.run(debug=True, port=8050, use_reloader=False)
+    # serve(app.server, host="0.0.0.0", port=8050, threads=5)

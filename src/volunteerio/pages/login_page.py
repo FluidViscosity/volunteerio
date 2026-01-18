@@ -18,30 +18,41 @@ layout = dbc.Container(
                 dbc.Row(
                     [
                         dbc.Col(
-                            dcc.Dropdown(
-                                id="username-input",
-                                placeholder="Username",
-                                # options=["Name1", "Name2", "Add new..."],
-                            ),
+                            [
+                                dbc.Row(
+                                    dcc.Dropdown(
+                                        id="username-input",
+                                        placeholder="Username",
+                                        style={"min-width": "120px"},
+                                        # options=["Name1", "Name2", "Add new..."],
+                                    ),
+                                ),
+                                html.Br(),
+                                dbc.Row(
+                                    dbc.Button(
+                                        "Log hours",
+                                        id="login-button",
+                                        color="primary",
+                                        style={"min-width": "120px"},
+                                        n_clicks=0,
+                                    ),
+                                    justify="center",
+                                ),
+                            ],
                             width=4,
                         ),
                     ],
                     justify="center",
                 ),
-                html.Br(),
-                dbc.Row(
-                    dbc.Col(
-                        dbc.Button(
-                            "Log hours", id="login-button", color="primary", n_clicks=0
-                        ),
-                        # width=4,
-                        align="center",
-                    ),
-                    justify="center",
-                    className="d-grid gap-2 col-4 mx-auto",
-                ),
+                # dbc.Row(
+                #     dbc.Col(
+                #         align="center",
+                #     ),
+                #     justify="center",
+                #     className="d-grid gap-2 col-4 mx-auto",
+                # ),
             ],
-            className="w-100",
+            # className="w-100",
         ),
     ],
     className="d-flex flex-column align-items-center justify-content-center vh-100",
