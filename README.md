@@ -80,3 +80,9 @@ Add the SSH public key to the github account
 **Install certbot**
 `sudo snap install --classic certbot`
 `sudo ln -s /snap/bin/certbot /usr/bin/certbot`
+
+
+
+## Working with the database
+Run the `volunteerio_db_access.py` script to establish a connection.
+Then DB will be available at localhost:15432
