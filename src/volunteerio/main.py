@@ -78,6 +78,8 @@ app.layout = dmc.MantineProvider(
                         id="selected-date-store",
                         data=date.today().isoformat(),
                     ),
+                    dcc.Store(id="screen-width"),
+                    dcc.Interval(id="screen-init", interval=1000, n_intervals=0),
                     dcc.Download(id="export-download"),
                 ],
                 style={
@@ -87,6 +89,16 @@ app.layout = dmc.MantineProvider(
             ),
         ],
     )
+)
+
+app.clientside_callback(
+    """
+    function(n) {
+        return window.innerWidth;
+    }
+    """,
+    Output("screen-width", "data"),
+    Input("screen-init", "n_intervals"),
 )
 
 

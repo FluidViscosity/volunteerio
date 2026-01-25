@@ -8,11 +8,15 @@ from dash import (
     dcc,
 )
 from dash.exceptions import PreventUpdate
+import dash_bootstrap_components as dbc
 import pandas as pd
 from volunteerio.db_config import db_params
 import dash_ag_grid as dag
 import psycopg2
 from datetime import date, datetime, timedelta
+
+DEFAULT_DESKTOP = 999
+MOBILE_BREAKPOINT = 768
 
 
 def get_week_dates(selected_date: str):
@@ -38,7 +42,45 @@ def get_week_dates(selected_date: str):
     return [f"{res[0]} {res[1].day}" for res in zip(days, week)], week
 
 
-def get_hours(user: str, selected_date: str) -> tuple[list[str], list[tuple]]:
+def get_day_date(selected_date: str):
+    d = date.fromisoformat(selected_date)
+    day_title = d.strftime("%A %d")
+    return [day_title], [d]
+
+
+def get_vol_day_hours(user: str, selected_date: str) -> tuple[list[str], list[tuple]]:
+    day_titles, dates = get_day_date(selected_date)
+    d = dates[0]
+    colname = d.isoformat()
+
+    query = f"""
+        SELECT
+            a.activity,
+            SUM(
+                CASE
+                    WHEN store.date = %s AND v.name = %s THEN store.hours
+                    ELSE 0
+                END
+            ) AS "{colname}"
+        FROM
+            activities a
+        LEFT JOIN activity_store store ON store.activity_id = a.id
+        LEFT JOIN volunteers v ON v.id = store.volunteer_id
+        GROUP BY
+            a.activity
+        ORDER BY
+            a.activity;
+    """
+
+    with psycopg2.connect(**db_params) as con:  # type: ignore
+        with con.cursor() as cur:
+            cur.execute(query, (d.isoformat(), user))
+            res = cur.fetchall()
+
+    return day_titles, res
+
+
+def get_vol_week_hours(user: str, selected_date: str) -> tuple[list[str], list[tuple]]:
     day_titles, dates = get_week_dates(selected_date)
 
     sum_cases = []
@@ -171,12 +213,33 @@ def sort_cols(display_hours: list[tuple]) -> list[tuple]:
     return sorted_display_hours
 
 
-def create_calendar(user: str, date: str) -> tuple[list[str], list[dict]]:
+def create_week_calendar(user: str, date: str) -> tuple[list[str], list[dict]]:
 
-    days, display_hours = get_hours(user, date)
+    days, display_hours = get_vol_week_hours(user, date)
     sorted_display_hours = sort_cols(display_hours)
     cols = ["Activity"] + days
     # convert display hours to a list of dictionaries
+    data = []
+
+    for i in range(len(display_hours)):
+        tmp = {}
+        for z in zip(cols, sorted_display_hours[i]):
+            if isinstance(z[1], str):
+                val = z[1].title()
+            elif z[1] == 0:
+                val = None
+            else:
+                val = float(z[1])
+            tmp.update({z[0]: val})
+        data.append(tmp)
+
+    return cols, data
+
+
+def create_day_calendar(user: str, date: str) -> tuple[list[str], list[str]]:
+    days, display_hours = get_vol_day_hours(user, date)
+    sorted_display_hours = sort_cols(display_hours)
+    cols = ["Activity"] + days
     data = []
 
     for i in range(len(display_hours)):
@@ -278,7 +341,136 @@ def get_summary_data_all_users(con, start, end) -> pd.DataFrame:
     return pd.read_sql_query(query, con=con, params=(start, end))
 
 
+def week_view():
+    return [
+        html.Br(),
+        dbc.Row(
+            [
+                # User card column
+                dbc.Col(
+                    dbc.Row(
+                        dbc.Card(
+                            [
+                                dbc.CardHeader(id="hours-user-title"),
+                                dbc.CardBody(
+                                    dbc.Row(id="hours-card-body"),
+                                ),
+                                dbc.NavLink(
+                                    dbc.Button("Save"),
+                                    id="save-button",
+                                    href="/",
+                                ),
+                            ]
+                        )
+                    ),
+                    style={"paddingTop": "40px"},
+                    width=2,
+                ),
+                # Calendar / table column
+                dbc.Col(
+                    [
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    dbc.Button(
+                                        "<",
+                                        id="calendar-previous-button",
+                                    ),
+                                    width=1,
+                                ),
+                                dbc.Col(
+                                    html.H3(
+                                        id="month-label",
+                                        className="text-center",
+                                    ),
+                                    width=10,
+                                ),
+                                dbc.Col(
+                                    dbc.Button(
+                                        ">",
+                                        id="calendar-next-button",
+                                    ),
+                                    width=1,
+                                    className="text-end",
+                                ),
+                            ],
+                            justify="between",
+                        ),
+                        dbc.Row(
+                            dbc.Col(id="hours-table-col"),
+                        ),
+                    ],
+                    width=10,
+                ),
+            ]
+        ),
+        html.P(id="cell-changed", style={"display": "none"}),
+    ]
+
+
+def day_view() -> str:
+    return [
+        html.Br(),
+        html.H1(id="hours-user-title", style={"display": "none"}),
+        html.H1(id="hours-card-body", style={"display": "none"}),
+        html.H1(id="save-button", style={"display": "none"}),
+        dbc.Row(
+            [
+                dbc.Col(
+                    [
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    dbc.Button(
+                                        "<",
+                                        id="calendar-previous-button",
+                                    ),
+                                    width=1,
+                                ),
+                                dbc.Col(
+                                    html.H3(
+                                        id="month-label",
+                                        className="text-center",
+                                    ),
+                                    width=10,
+                                ),
+                                dbc.Col(
+                                    dbc.Button(
+                                        ">",
+                                        id="calendar-next-button",
+                                    ),
+                                    width=1,
+                                    className="text-end",
+                                ),
+                            ],
+                            justify="between",
+                        ),
+                        dbc.Row(
+                            dbc.Col(id="hours-table-col"),
+                        ),
+                    ],
+                ),
+            ]
+        ),
+        html.P(id="cell-changed", style={"display": "none"}),
+    ]
+
+
 def register_callbacks(app) -> None:
+    @app.callback(
+        Output("hours-root", "children"),
+        Input("url", "pathname"),
+        State("screen-width", "data"),
+    )
+    def render_hours(pathname, width):
+        if pathname != "/hours":
+            raise PreventUpdate
+
+        if width is None:
+            width = DEFAULT_DESKTOP
+        render = day_view() if width < MOBILE_BREAKPOINT else week_view()
+        return render
+
     @app.callback(
         Output("hours-user-title", "children"),
         Output("hours-table-col", "children"),
@@ -286,13 +478,22 @@ def register_callbacks(app) -> None:
         Output("hours-card-body", "children"),
         Input("url", "pathname"),
         Input("selected-date-store", "data"),
+        State("screen-width", "data"),
         State("user-store", "data"),
     )
-    def prepare_hours_page(url: str, cur_date: str, user: str):
+    def prepare_hours_page(url: str, cur_date: str, width: int | None, user: str):
         if url != "/hours":
             return no_update
 
-        cols, data = create_calendar(user, cur_date)
+        is_mobile = width is not None and width < MOBILE_BREAKPOINT
+
+        if is_mobile:
+            cols, data = create_day_calendar(user, cur_date)
+            title = None
+
+        else:
+            cols, data = create_week_calendar(user, cur_date)
+            title = html.H1(user, style={"textAlign": "center"})
         hours_this_month, last_visit = get_user_stats(user, cur_date)
         user_stats = html.Div(
             [
@@ -330,7 +531,7 @@ def register_callbacks(app) -> None:
         date = datetime.fromisoformat(cur_date)
         month = date.strftime("%B")
 
-        return html.H1(user, style={"textAlign": "center"}), table, month, user_stats
+        return title, table, month, user_stats
 
     @app.callback(
         Output("cell-changed", "children"),
@@ -348,7 +549,14 @@ def register_callbacks(app) -> None:
         )
         with psycopg2.connect(**db_params) as con:  # type: ignore
             with con.cursor() as cur:
-                query = """
+                update_hours_query(volunteer_name, hours, activity, set_date, con, cur)
+
+        return f"{cell_changed}"
+
+    def update_hours_query(
+        volunteer_name: str, hours: float, activity: str, set_date: str, con, cur
+    ):
+        query = """
                 WITH v AS (
                     SELECT id AS volunteer_id FROM volunteers WHERE name = %s
                 ),
@@ -362,27 +570,33 @@ def register_callbacks(app) -> None:
                 DO UPDATE SET hours = EXCLUDED.hours;
                 """
 
-                cur.execute(query, (volunteer_name, activity, set_date, hours))
-                con.commit()
-
-        return f"{cell_changed}"
+        cur.execute(query, (volunteer_name, activity, set_date, hours))
+        con.commit()
 
     @app.callback(
         Output("selected-date-store", "data"),
         Input("calendar-previous-button", "n_clicks"),
         Input("calendar-next-button", "n_clicks"),
         State("selected-date-store", "data"),
+        State("screen-width", "data"),
     )
     def update_date(
-        prev_clicks: int | None, next_clicks: int | None, cur_date: str
+        prev_clicks: int | None,
+        next_clicks: int | None,
+        cur_date: str,
+        width: None | int,
     ) -> str | PreventUpdate:
         if prev_clicks is None and next_clicks is None:
             raise PreventUpdate
         button = callback_context.triggered_id
-        if button == "calendar-previous-button":
-            new_date = date.fromisoformat(cur_date) - timedelta(days=7)
+        if width is None or width > MOBILE_BREAKPOINT:
+            delta = timedelta(days=7)
         else:
-            new_date = date.fromisoformat(cur_date) + timedelta(days=7)
+            delta = timedelta(days=1)
+        if button == "calendar-previous-button":
+            new_date = date.fromisoformat(cur_date) - delta
+        else:
+            new_date = date.fromisoformat(cur_date) + delta
 
         return new_date.isoformat()
 
