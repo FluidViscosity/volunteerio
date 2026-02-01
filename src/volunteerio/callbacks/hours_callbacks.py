@@ -140,15 +140,20 @@ def get_date_from_col(current_date: str, col_id: str):
 
 def get_raw_data_all_users(con, start, end) -> pd.DataFrame:
     query = """
-            SELECT store.id as record_id,
-            store.date as date,
-            v.id as volunteer_id,
-            v.name as volunteer_name,
-            a.activity as activity_name,
-            store.hours as hours
+            SELECT 
+                store.id as record_id,
+                store.date as date,
+                t.team_name as team,
+                v.name as volunteer_name,
+                a.activity as activity_name,
+                store.hours as hours
             FROM activity_store store
-            LEFT JOIN volunteers v ON v.id = store.volunteer_id
-            LEFT JOIN activities a ON a.id = store.activity_id  
+            LEFT JOIN volunteers v 
+                ON v.id = store.volunteer_id
+            LEFT JOIN activities a 
+                ON a.id = store.activity_id  
+            LEFT JOIN teams t
+                ON t.id = v.team_id
             WHERE store.date BETWEEN %s AND %s
             """
     df = pd.read_sql_query(query, con=con, params=(start, end))
@@ -158,15 +163,20 @@ def get_raw_data_all_users(con, start, end) -> pd.DataFrame:
 
 def get_raw_data_active_users(con, start, end) -> pd.DataFrame:
     query = """
-            SELECT store.id as record_id,
-            store.date as date,
-            v.id as volunteer_id,
-            v.name as volunteer_name,
-            a.activity as activity_name,
-            store.hours as hours
+            SELECT 
+                store.id as record_id,
+                store.date as date,
+                t.team_name as team,
+                v.name as volunteer_name,
+                a.activity as activity_name,
+                store.hours as hours
             FROM activity_store store
-            LEFT JOIN volunteers v ON v.id = store.volunteer_id
-            LEFT JOIN activities a ON a.id = store.activity_id  
+            LEFT JOIN volunteers v 
+                ON v.id = store.volunteer_id
+            LEFT JOIN activities a 
+                ON a.id = store.activity_id  
+            LEFT JOIN teams t
+                ON t.id = v.team_id
             WHERE store.date BETWEEN %s AND %s
             AND v.is_active=TRUE
             """
@@ -292,7 +302,7 @@ def get_user_stats(user: str, date: str) -> tuple[float, str]:
 
 def create_summary_pivot_table(df: pd.DataFrame) -> pd.DataFrame:
     # Create the pivot table
-    return pd.pivot_table(
+    pt = pd.pivot_table(
         df,
         index=["volunteer_name"],
         columns=["activity_name"],
@@ -303,12 +313,20 @@ def create_summary_pivot_table(df: pd.DataFrame) -> pd.DataFrame:
         margins_name="Totals",
     ).reset_index()
 
+    teams = df[["volunteer_name", "team"]].drop_duplicates("volunteer_name")
+
+    pt = pt.reset_index(drop=True).merge(teams, on="volunteer_name", how="left")
+    fixed_cols = ["volunteer_name", "team"]
+    pt = pt[fixed_cols + [col for col in pt.columns if col not in fixed_cols]]
+    return pt
+
 
 def get_summary_data_active_users(con, start, end) -> pd.DataFrame:
 
     query = """
             SELECT 
                 v.name AS volunteer_name,
+                t.team_name as team,
                 a.activity AS activity_name,
                 COALESCE(store.hours, 0) AS hours
             FROM volunteers v
@@ -317,6 +335,8 @@ def get_summary_data_active_users(con, start, end) -> pd.DataFrame:
                 ON v.id = store.volunteer_id
                 AND a.id = store.activity_id
                 AND store.date BETWEEN %s AND %s
+            LEFT JOIN teams t
+                ON t.id = v.team_id
             WHERE v.is_active=TRUE
             ORDER BY v.name, a.activity;
         """
@@ -328,6 +348,7 @@ def get_summary_data_all_users(con, start, end) -> pd.DataFrame:
     query = """
             SELECT 
                 v.name AS volunteer_name,
+                t.team_name as team,
                 a.activity AS activity_name,
                 COALESCE(store.hours, 0) AS hours
             FROM volunteers v
@@ -336,6 +357,8 @@ def get_summary_data_all_users(con, start, end) -> pd.DataFrame:
                 ON v.id = store.volunteer_id
                 AND a.id = store.activity_id
                 AND store.date BETWEEN %s AND %s
+            LEFT JOIN teams t
+                ON t.id = v.team_id
             ORDER BY v.name, a.activity;
         """
     return pd.read_sql_query(query, con=con, params=(start, end))

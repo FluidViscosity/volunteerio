@@ -52,6 +52,13 @@ layout = dbc.Container(
                 dbc.ModalBody(
                     children=[
                         dbc.Input(id="new-user-input"),
+                        dcc.Dropdown(
+                            id="new-user-team-input",
+                            options=[
+                                {"label": "Team1", "value": "Team1"},
+                                {"label": "Team2", "value": "Team2"},
+                            ],
+                        ),
                         html.Div(id="new-user-error", className="text-danger"),
                         dbc.Button("Add", color="primary", id="new-user-button"),
                     ]
